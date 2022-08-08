@@ -17,14 +17,19 @@ router.post("/encode", async (req, res) => {
     if (existingUrl)
       return res.status(200).json({ short_url: existingUrl.short_url });
 
-    const existingUrlCode = await db.get(
-      "SELECT * FROM urls WHERE short_url = ?",
-      `${baseUrl}${urlCode}`
-    );
+    while (true) {
+      const existingUrlCode = await db.get(
+        "SELECT * FROM urls WHERE short_url = ?",
+        `${baseUrl}${urlCode}`
+      );
 
-    if (existingUrlCode) {
-      urlCode = shortid.generate();
+      if (existingUrlCode) {
+        urlCode = shortid.generate();
+      } else {
+        break;
+      }
     }
+
     await db.run(
       "INSERT INTO urls (full_url, short_url) VALUES (?, ?)",
       req.body.inputUrl,
